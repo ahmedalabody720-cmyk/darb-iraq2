@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>درب العراق</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-icon">📍</span>
+      <div>
+        <h1>درب العراق</h1>
+        <p>طريقك أوضح ويانه</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="settingsButton" class="icon-button" type="button" aria-label="الإعدادات">⚙️ الإعدادات</button>
+      <button id="locateButton" class="icon-button" type="button">موقعي</button>
+    </div>
+  </header>
+
+  <main class="app-layout">
+    <section class="panel">
+      <h2>وين تريد تروح؟</h2>
+      <form id="searchForm">
+        <label for="destinationInput">اسم المكان أو العنوان</label>
+        <div class="search-row">
+          <input id="destinationInput" type="search"
+            placeholder="مثلاً: مطار بغداد الدولي" autocomplete="off" required>
+          <button class="primary-button" type="submit">بحث</button>
+        </div>
+      </form>
+
+      <p id="status" class="status" role="status">جاري تجهيز الخريطة...</p>
+      <div id="searchResults" class="search-results"></div>
+      <button id="clearButton" class="secondary-button" type="button">مسح الرحلة</button>
+
+      <section id="tripInfo" class="trip-info" hidden>
+        <h2>معلومات الرحلة</h2>
+        <div class="stats">
+          <div class="stat">
+            <span>المسافة</span>
+            <strong id="distance">—</strong>
+          </div>
+          <div class="stat">
+            <span>المدة المتوقعة</span>
+            <strong id="duration">—</strong>
+          </div>
+        </div>
+        <div class="arrival-box">
+          <span>وقت الوصول التقريبي</span>
+          <strong id="arrivalTime">—</strong>
+        </div>
+
+        <h3>المسارات البديلة</h3>
+        <div id="routeOptions" class="route-options"></div>
+        <button id="startButton" class="primary-button full-button" type="button">ابدأ الملاحة الصوتية</button>
+        <button id="stopButton" class="secondary-button full-button" type="button" hidden>إيقاف الملاحة</button>
+
+        <div id="navigationInfo" class="navigation-info" hidden>
+          <span>التوجيه الحالي</span>
+          <strong id="nextInstruction">—</strong>
+        </div>
+      </section>
+
+      <p class="disclaimer">أوقات الوصول تقديرية وقد لا تعكس الازدحام المباشر.</p>
+    </section>
+
+    <section class="map-section" aria-label="الخريطة">
+      <div id="map"></div>
+      <div class="map-note">الخريطة من OpenStreetMap</div>
+    </section>
+  </main>
+
+  <div id="settingsPage" class="settings-overlay" hidden>
+    <section class="settings-panel" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="settings-header">
+        <div>
+          <h2 id="settingsTitle">⚙️ إعدادات درب العراق</h2>
+          <p>خصص التطبيق حسب راحتك</p>
+        </div>
+        <button id="closeSettingsButton" class="close-button" type="button" aria-label="إغلاق">✕</button>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>الإرشاد الصوتي</strong><p>تشغيل أو إيقاف تعليمات الطريق بالصوت</p></div>
+        <label class="switch"><input id="voiceEnabled" type="checkbox"><span></span></label>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>سرعة الصوت</strong><p>اختار سرعة قراءة التعليمات</p></div>
+        <select id="voiceSpeed">
+          <option value="0.75">بطيئة</option>
+          <option value="0.9">طبيعية</option>
+          <option value="1.1">سريعة</option>
+          <option value="1.25">سريعة جداً</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>وحدات المسافة</strong><p>طريقة عرض المسافة على الطريق</p></div>
+        <select id="distanceUnits">
+          <option value="km">كيلومتر</option>
+          <option value="mi">ميل</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>المظهر</strong><p>اختار ألوان التطبيق</p></div>
+        <select id="themeMode">
+          <option value="light">فاتح</option>
+          <option value="dark">داكن</option>
+          <option value="system">حسب الجهاز</option>
+        </select>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>تجنّب الطرق المدفوعة</strong><p>قد لا يتوفر هذا الخيار في خدمة الطرق الحالية</p></div>
+        <label class="switch"><input id="avoidTolls" type="checkbox"><span></span></label>
+      </div>
+
+      <div class="setting-row">
+        <div><strong>إبقاء الشاشة مفتوحة</strong><p>يعمل إذا كان المتصفح والجهاز يدعمانه</p></div>
+        <label class="switch"><input id="keepScreenOn" type="checkbox"><span></span></label>
+      </div>
+
+      <div class="saved-place">
+        <h3>🏠 عنوان المنزل</h3>
+        <p id="homeAddress">ما محفوظ عنوان للمنزل</p>
+        <div class="saved-actions">
+          <button id="saveHomeButton" class="secondary-button" type="button">حفظ الوجهة الحالية</button>
+          <button id="goHomeButton" class="primary-button" type="button">اذهب للمنزل</button>
+        </div>
+      </div>
+
+      <div class="saved-place">
+        <h3>💼 عنوان العمل</h3>
+        <p id="workAddress">ما محفوظ عنوان للعمل</p>
+        <div class="saved-actions">
+          <button id="saveWorkButton" class="secondary-button" type="button">حفظ الوجهة الحالية</button>
+          <button id="goWorkButton" class="primary-button" type="button">اذهب للعمل</button>
+        </div>
+      </div>
+
+      <p class="settings-note">الإعدادات والعناوين المحفوظة تبقى في هذا المتصفح على هذا الجهاز.</p>
+      <button id="doneSettingsButton" class="primary-button full-button" type="button">تم</button>
+    </section>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
